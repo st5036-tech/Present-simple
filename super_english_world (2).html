@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super English World - Simple Present Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --mario-blue: #5c94fc;
+            --mario-sky: #5c94fc;
+            --mario-green: #00a800;
+            --mario-yellow: #f8d800;
+            --mario-red: #e52521;
+            --mario-brick: #c84c0c;
+            --mario-dark: #000000;
+            --mario-pipe: #00a800;
+            --mario-gold: #f8b800;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #050508;
+            color: #ffffff;
+            font-family: 'Press Start 2P', 'Outfit', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 900px;
+            max-height: 520px;
+            background: var(--mario-sky);
+            border: 6px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 0 6px #000, 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(92, 148, 252, 0.4);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            image-rendering: pixelated;
+        }
+
+        /* CRT Scanline Effect Overlay */
+        #game-container::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 40;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .pixel-text {
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 3px 3px 0px #000, -1px -1px 0px #000;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 3px 3px 0 #000, 0 0 10px #f8d800; }
+            100% { text-shadow: 3px 3px 0 #000, 0 0 25px #ff5500, 0 0 10px #fff; }
+        }
+
+        @keyframes coinBounce {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0); }
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* START SCREEN - AUTHENTIC NES TITLE CARD */
+        #start-screen {
+            background: var(--mario-sky);
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 20px 25px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .title-box {
+            position: relative;
+            z-index: 2;
+            background: #d05018;
+            padding: 18px 25px;
+            border: 5px solid #000;
+            box-shadow: 6px 6px 0px #000, inset -5px -5px 0px #802000, inset 5px 5px 0px #ff8844;
+            max-width: 580px;
+            margin-top: 10px;
+            animation: titleGlow 2s infinite alternate;
+        }
+
+        .main-title {
+            color: #f8f8f8;
+            font-size: 1.7rem;
+            line-height: 1.35;
+            letter-spacing: 2px;
+            text-shadow: 4px 4px 0 #000, -2px -2px 0 #800000;
+        }
+
+        .subtitle {
+            color: #f8d800;
+            font-size: 0.75rem;
+            margin-top: 10px;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 0 #000;
+            background: #000;
+            padding: 4px 8px;
+            display: inline-block;
+            border: 2px solid #f8d800;
+        }
+
+        .menu-buttons {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 340px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: #fc9838;
+            color: #fff;
+            border: 4px solid #000;
+            padding: 12px 18px;
+            font-size: 0.75rem;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0px #000, inset -3px -3px 0px rgba(0,0,0,0.3), inset 3px 3px 0px rgba(255,255,255,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000, inset -3px -3px 0px rgba(0,0,0,0.3), inset 3px 3px 0px rgba(255,255,255,0.4);
+            filter: brightness(1.15);
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        .btn-green { background: #00a800; }
+        .btn-red { background: #e52521; }
+        .btn-blue { background: #2080f0; }
+
+        /* HUD TOP BAR */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.65);
+            font-size: 0.65rem;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            box-sizing: border-box;
+            border-bottom: 3px solid #000;
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hud-label {
+            color: #f8f8f8;
+            font-size: 0.55rem;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .audio-btn {
+            background: #202028;
+            border: 2px solid #fff;
+            color: #f8d800;
+            padding: 4px 8px;
+            font-size: 0.6rem;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #000;
+        }
+
+        .audio-btn:hover {
+            background: #404050;
+        }
+
+        /* WORLD MAP SCREEN */
+        #map-screen {
+            background: #5c94fc;
+            padding: 55px 20px 20px 20px;
+            align-items: center;
+        }
+
+        .map-title {
+            color: #f8d800;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            text-align: center;
+            text-shadow: 3px 3px 0 #000;
+        }
+
+        .worlds-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 820px;
+            flex: 1;
+            align-content: center;
+        }
+
+        .world-card {
+            background: #000000;
+            border: 3px solid #fff;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #000;
+            transition: transform 0.15s ease;
+        }
+
+        .world-card:not(.locked):hover {
+            transform: translateY(-4px) scale(1.02);
+            border-color: var(--mario-yellow);
+            box-shadow: 6px 6px 0px #000, 0 0 15px var(--mario-yellow);
+        }
+
+        .world-card.locked {
+            opacity: 0.5;
+            filter: grayscale(1);
+            cursor: not-allowed;
+        }
+
+        .world-num {
+            color: var(--mario-yellow);
+            font-size: 0.6rem;
+            margin-bottom: 6px;
+        }
+
+        .world-name {
+            font-size: 0.65rem;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+
+        .world-stars {
+            color: var(--mario-yellow);
+            font-size: 0.75rem;
+            margin-top: auto;
+            letter-spacing: 2px;
+        }
+
+        .lock-icon {
+            font-size: 1.5rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* CANVAS & GAMEPLAY */
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--mario-sky);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        /* QUESTION MODAL NES STYLE */
+        #question-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 50;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .modal-box {
+            background: #000000;
+            border: 5px solid #ffffff;
+            padding: 20px;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 8px 8px 0px #e52521, 0 0 25px rgba(229, 37, 33, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            font-family: 'Outfit', sans-serif;
+            position: relative;
+        }
+
+        .q-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #fc9838;
+            padding-bottom: 8px;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .q-topic {
+            color: var(--mario-yellow);
+            font-size: 0.6rem;
+        }
+
+        .q-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.4;
+            margin: 6px 0;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #202028;
+            border: 3px solid #fff;
+            color: #fff;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.12s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        .option-btn:hover {
+            border-color: var(--mario-yellow);
+            background: #383848;
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 #000;
+        }
+
+        .word-pool, .word-target {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 52px;
+            padding: 10px;
+            background: #101018;
+            border: 2px dashed #666;
+            align-items: center;
+        }
+
+        .word-target {
+            border-style: solid;
+            border-color: #fc9838;
+            background: #181828;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .word-chip {
+            background: #fc9838;
+            color: #000;
+            padding: 7px 14px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: 2px solid #000;
+            box-shadow: 3px 3px 0 #000;
+            transition: transform 0.1s;
+        }
+
+        .word-chip:hover {
+            transform: scale(1.05);
+            background: var(--mario-yellow);
+        }
+
+        .feedback-box {
+            padding: 12px;
+            font-size: 0.9rem;
+            display: none;
+            line-height: 1.4;
+            border: 3px solid #fff;
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .feedback-box.correct {
+            display: block;
+            background: #006800;
+            color: #fff;
+            border-color: #00ff00;
+        }
+
+        .feedback-box.incorrect {
+            display: block;
+            background: #a81000;
+            color: #fff;
+            border-color: #ff5555;
+        }
+
+        /* TOUCH CONTROLS OVERLAY */
+        #touch-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 30;
+            pointer-events: none;
+        }
+
+        .d-pad, .action-pad {
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .touch-btn {
+            width: 52px;
+            height: 52px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            color: #fff;
+            touch-action: manipulation;
+            font-family: 'Press Start 2P', cursive;
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        .touch-btn:active {
+            background: rgba(252, 152, 56, 0.9);
+            transform: translate(2px, 2px);
+        }
+
+        .touch-btn-wide {
+            width: 75px;
+            background: rgba(229, 37, 33, 0.85);
+        }
+
+        /* INSTRUCTIONS & RESULTS SCREEN */
+        .modal-screen {
+            background: rgba(0, 0, 0, 0.92);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .content-card {
+            background: #000;
+            border: 5px solid #fff;
+            padding: 25px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 8px 8px 0px #fc9838, 0 0 20px rgba(252, 152, 56, 0.4);
+        }
+
+        .content-card h2 {
+            color: var(--mario-yellow);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .content-card p, .content-card li {
+            font-size: 0.85rem;
+            color: #ddd;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .content-card ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: #202028;
+            border: 3px solid #fff;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            color: var(--mario-yellow);
+            font-weight: bold;
+            margin-top: 5px;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        @media (max-width: 768px) {
+            .main-title { font-size: 1.1rem; }
+            .worlds-grid { grid-template-columns: 1fr 1fr; }
+            .options-grid { grid-template-columns: 1fr; }
+            #touch-controls { display: flex; }
+            .modal-box { padding: 14px; }
+            .q-text { font-size: 0.95rem; }
+        }
+
+        @media (max-width: 480px) {
+            .worlds-grid { grid-template-columns: 1fr; }
+            .hud-label { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <!-- TOP HUD BAR -->
+        <div id="hud" style="display: none;">
+            <div class="hud-item">
+                <span class="hud-label">SCORE</span>
+                <span id="hud-score" class="hud-val">000000</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">COINS</span>
+                <span id="hud-coins" class="hud-val">🪙x00</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">WORLD</span>
+                <span id="hud-world" class="hud-val">1-1</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">LIVES</span>
+                <span id="hud-lives" class="hud-val">❤️x3</span>
+            </div>
+            <button class="audio-btn pixel-text" id="btn-audio-toggle" onclick="audioEngine.toggleMute()">🔊 BGM</button>
+        </div>
+
+        <!-- SCREEN 1: START / MAIN MENU -->
+        <div id="start-screen" class="screen active">
+            <div class="title-box">
+                <h1 class="main-title pixel-text">SUPER ENGLISH<br>WORLD</h1>
+                <div class="subtitle pixel-text">SIMPLE PRESENT ADVENTURE</div>
+            </div>
+
+            <div style="font-size: 3.5rem; animation: coinBounce 0.8s infinite alternate; filter: drop-shadow(4px 4px 0 #000);">
+                🏃‍♂️💨 ❓ 🪙
+            </div>
+
+            <div class="menu-buttons">
+                <button class="btn btn-green pixel-text" onclick="showScreen('map-screen')">🎮 JUGAR</button>
+                <button class="btn btn-blue pixel-text" onclick="showScreen('instructions-screen')">📖 INSTRUCCIONES</button>
+                <button class="btn btn-red pixel-text" onclick="resetProgress()">🔄 REINICIAR</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: WORLD MAP SELECTOR -->
+        <div id="map-screen" class="screen">
+            <h2 class="map-title pixel-text">SELECCIONA UN MUNDO</h2>
+            <div class="worlds-grid" id="worlds-container"></div>
+            <button class="btn btn-blue pixel-text" style="margin-top: 15px; width: 220px;" onclick="showScreen('start-screen')">⬅ VOLVER</button>
+        </div>
+
+        <!-- SCREEN 3: GAME CANVAS AREA -->
+        <div id="game-screen" class="screen">
+            <div id="canvas-container">
+                <canvas id="gameCanvas"></canvas>
+                
+                <div id="touch-controls">
+                    <div class="d-pad">
+                        <div class="touch-btn" id="btn-left">◀</div>
+                        <div class="touch-btn" id="btn-right">▶</div>
+                    </div>
+                    <div class="action-pad">
+                        <div class="touch-btn touch-btn-wide" id="btn-jump">JUMP</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: INSTRUCTIONS SCREEN -->
+        <div id="instructions-screen" class="screen modal-screen">
+            <div class="content-card">
+                <h2 class="pixel-text">CÓMO JUGAR</h2>
+                <p><strong>Super English World</strong> es una aventura de plataformas retro donde aprenderás y practicarás el <strong>Simple Present</strong> en inglés con música chiptune y estilo NES.</p>
+                
+                <h3 style="color: var(--mario-yellow); margin-top: 15px;">🎮 Controles:</h3>
+                <ul>
+                    <li><strong>Teclado:</strong> Flechas (Izquierda / Derecha) o A / D para moverte. Flecha Arriba, W o Espacio para Saltar.</li>
+                    <li><strong>Móvil / Tablet:</strong> Usa los botones táctiles en pantalla.</li>
+                </ul>
+
+                <h3 style="color: var(--mario-yellow); margin-top: 15px;">📚 Mecánica de Juego:</h3>
+                <ul>
+                    <li>Avanza por el nivel y salta sobre las plataformas.</li>
+                    <li>Golpea los <strong>Bloques Misteriosos (?)</strong> con la cabeza para activar desafíos gramaticales.</li>
+                    <li>Responde correctamente para ganar Monedas, Estrellas y Puntos.</li>
+                    <li>Evita o salta sobre los Goombas. Si te tocan, perderás una vida.</li>
+                    <li>Llega a la <strong>Tubería Verde de Meta</strong> para completar el nivel.</li>
+                </ul>
+
+                <button class="btn btn-green pixel-text" style="width: 100%; margin-top: 20px;" onclick="showScreen('start-screen')">¡ENTENDIDO!</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: RESULTS / WORLD CLEAR -->
+        <div id="results-screen" class="screen modal-screen">
+            <div class="content-card" style="text-align: center;">
+                <h2 class="pixel-text" style="color: #00c853; font-size: 1.1rem;">¡NIVEL COMPLETADO!</h2>
+                <p id="results-world-name" class="pixel-text" style="font-size: 0.75rem; color: var(--mario-yellow); margin-top: 10px;"></p>
+
+                <div style="font-size: 2.8rem; margin: 15px 0;" id="results-stars">⭐⭐⭐</div>
+
+                <div class="results-stats">
+                    <div class="stat-box">
+                        <div style="font-size: 0.7rem; color: #aaa;">MONEDAS</div>
+                        <div class="stat-value" id="res-coins">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="font-size: 0.7rem; color: #aaa;">PUNTOS</div>
+                        <div class="stat-value" id="res-score">0000</div>
+                    </div>
+                </div>
+
+                <div class="menu-buttons" style="margin: 0 auto;">
+                    <button class="btn btn-green pixel-text" onclick="showScreen('map-screen')">SIGUIENTE MUNDO</button>
+                    <button class="btn btn-blue pixel-text" onclick="restartCurrentLevel()">REPETIR NIVEL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUESTION MODAL OVERLAY -->
+        <div id="question-modal">
+            <div class="modal-box">
+                <div class="q-header">
+                    <span class="q-topic pixel-text" id="q-topic-tag">SIMPLE PRESENT</span>
+                    <span class="pixel-text" style="color: var(--mario-yellow);" id="q-reward-tag">+200 PTS</span>
+                </div>
+
+                <div class="q-text" id="q-text-content">Loading question...</div>
+                <div id="q-input-container"></div>
+                <div id="q-feedback" class="feedback-box"></div>
+
+                <button id="btn-submit-q" class="btn btn-green pixel-text" style="width: 100%; display: none;">COMPROBAR RESPUESTA</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ==========================================================================
+           ADVANCED CHIPTUNE AUDIO & SOUND FX SYNTHESIZER
+           ========================================================================== */
+        class AudioSynthEngine {
+            constructor() {
+                this.ctx = null;
+                this.isMuted = false;
+                this.bgmTimer = null;
+                this.bgmNoteIndex = 0;
+                this.bgmSpeed = 160; // ms per beat
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                const btn = document.getElementById('btn-audio-toggle');
+                if (btn) btn.innerText = this.isMuted ? '🔇 BGM' : '🔊 BGM';
+                if (this.isMuted) {
+                    this.stopBGM();
+                } else {
+                    this.startBGM();
+                }
+            }
+
+            playTone(freq, type, duration, vol = 0.1) {
+                if (this.isMuted) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+
+            // FX PRESETS
+            jump() {
+                if (this.isMuted) return;
+                this.init();
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.15);
+                } catch(e) {}
+            }
+
+            coin() {
+                this.playTone(987.77, 'square', 0.08, 0.15);
+                setTimeout(() => this.playTone(1318.51, 'square', 0.25, 0.15), 70);
+            }
+
+            stomp() {
+                this.playTone(180, 'triangle', 0.08, 0.2);
+                setTimeout(() => this.playTone(110, 'triangle', 0.1, 0.2), 60);
+            }
+
+            correct() {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => this.playTone(freq, 'triangle', 0.12, 0.15), idx * 80);
+                });
+            }
+
+            wrong() {
+                this.playTone(220, 'sawtooth', 0.18, 0.2);
+                setTimeout(() => this.playTone(165, 'sawtooth', 0.25, 0.2), 160);
+            }
+
+            powerup() {
+                const notes = [330, 392, 659, 523, 587, 784];
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => this.playTone(freq, 'square', 0.08, 0.12), idx * 60);
+                });
+            }
+
+            fanfare() {
+                const melody = [523, 523, 523, 659, 784, 1046];
+                melody.forEach((freq, idx) => {
+                    setTimeout(() => this.playTone(freq, 'square', 0.2, 0.15), idx * 120);
+                });
+            }
+
+            /* NES CHIPTUNE BACKGROUND MUSIC LOOP */
+            startBGM() {
+                if (this.bgmTimer || this.isMuted) return;
+                this.init();
+
+                // Classic Mario-style upbeat chiptune sequence
+                const melody = [
+                    659, 659, 0, 659, 0, 523, 659, 0,
+                    784, 0, 0, 0, 392, 0, 0, 0,
+                    523, 0, 0, 392, 0, 0, 329, 0,
+                    0, 440, 0, 493, 0, 466, 440, 0,
+                    392, 659, 784, 880, 0, 698, 784, 0
+                ];
+
+                this.bgmNoteIndex = 0;
+                this.bgmTimer = setInterval(() => {
+                    if (this.isMuted) return;
+                    const freq = melody[this.bgmNoteIndex];
+                    if (freq > 0) {
+                        this.playTone(freq, 'square', 0.1, 0.04);
+                    }
+                    this.bgmNoteIndex = (this.bgmNoteIndex + 1) % melody.length;
+                }, this.bgmSpeed);
+            }
+
+            stopBGM() {
+                if (this.bgmTimer) {
+                    clearInterval(this.bgmTimer);
+                    this.bgmTimer = null;
+                }
+            }
+        }
+
+        const audioEngine = new AudioSynthEngine();
+
+        const WORLDS_DATA = [
+            {
+                id: 1,
+                title: "Affirmative Sentences",
+                subtitle: "Oraciones Afirmativas",
+                color: "#4CAF50",
+                questions: [
+                    {
+                        type: "choice",
+                        question: "Completa la oración: 'She ___ to school every morning.'",
+                        options: ["walk", "walks", "is walk", "walking"],
+                        correct: 1,
+                        explanation: "¡Correcto! En el Present Simple, con He/She/It agregamos '-s' o '-es' al verbo."
+                    },
+                    {
+                        type: "choice",
+                        question: "Elige la opción correcta: 'They ___ video games on weekends.'",
+                        options: ["plays", "play", "playing", "played"],
+                        correct: 1,
+                        explanation: "¡Muy bien! Con I/You/We/They el verbo se mantiene en su forma base."
+                    },
+                    {
+                        type: "order",
+                        question: "Ordena la oración afirmativa:",
+                        words: ["cat", "The", "drinks", "milk"],
+                        correctOrder: ["The", "cat", "drinks", "milk"],
+                        explanation: "Estructura correcta: Sujeto (The cat) + Verbo con -s (drinks) + Complemento (milk)."
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "Negatives (Don't / Doesn't)",
+                subtitle: "Oraciones Negativas",
+                color: "#2196F3",
+                questions: [
+                    {
+                        type: "choice",
+                        question: "Completa: 'He ___ like spicy food.'",
+                        options: ["don't", "doesn't", "not", "isn't"],
+                        correct: 1,
+                        explanation: "¡Excelente! Usamos 'doesn't' para He, She, It en oraciones negativas."
+                    },
+                    {
+                        type: "choice",
+                        question: "Completa: 'We ___ have a car.'",
+                        options: ["doesn't", "don't", "not have", "aren't"],
+                        correct: 1,
+                        explanation: "¡Bien hecho! Usamos 'don't' con I, You, We, They."
+                    },
+                    {
+                        type: "choice",
+                        question: "Encuentra el error: 'She doesn't likes coffee.'",
+                        options: ["Cambiar 'doesn't' por 'don't'", "Cambiar 'likes' por 'like'", "La oración está bien", "Quitar 'coffee'"],
+                        correct: 1,
+                        explanation: "¡Exacto! Después de 'doesn't', el verbo regresa a su forma base sin '-s' (like)."
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "Questions (Do / Does)",
+                subtitle: "Preguntas y Respuestas",
+                color: "#FF9800",
+                questions: [
+                    {
+                        type: "choice",
+                        question: "Completa la pregunta: '___ you live in London?'",
+                        options: ["Does", "Do", "Are", "Is"],
+                        correct: 1,
+                        explanation: "¡Correcto! Las preguntas con 'You' comienzan con el auxiliar 'Do'."
+                    },
+                    {
+                        type: "choice",
+                        question: "Completa: '___ Peter play guitar?'",
+                        options: ["Do", "Is", "Does", "Has"],
+                        correct: 2,
+                        explanation: "¡Así es! Usamos 'Does' para preguntas con He/She/It (Peter)."
+                    },
+                    {
+                        type: "order",
+                        question: "Ordena la pregunta correctamente:",
+                        words: ["Do", "soccer?", "play", "they"],
+                        correctOrder: ["Do", "they", "play", "soccer?"],
+                        explanation: "Estructura de pregunta: Auxiliar (Do) + Sujeto (they) + Verbo (play) + Complemento."
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "Daily Routines",
+                subtitle: "Rutinas Diarias",
+                color: "#9C27B0",
+                questions: [
+                    {
+                        type: "choice",
+                        question: "Sustituye la rutina: 'I ___ up at 7:00 AM every day.'",
+                        options: ["wake", "wakes", "waking", "waked"],
+                        correct: 0,
+                        explanation: "¡Perfecto! Para la primera persona ('I') usamos la forma base 'wake'."
+                    },
+                    {
+                        type: "choice",
+                        question: "'My brother ___ his teeth after breakfast.'",
+                        options: ["brush", "brushs", "brushes", "brushing"],
+                        correct: 2,
+                        explanation: "¡Correcto! Los verbos terminados en -sh agregan '-es' para la tercera persona (brushes)."
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "Third Person Rules",
+                subtitle: "Reglas de la 3ª Persona",
+                color: "#E91E63",
+                questions: [
+                    {
+                        type: "choice",
+                        question: "¿Cuál es la forma correcta del verbo 'STUDY' para 'She'?",
+                        options: ["studys", "studies", "studyed", "studyes"],
+                        correct: 1,
+                        explanation: "¡Bien visto! Si el verbo termina en consonante + Y, se cambia la Y por '-ies' (studies)."
+                    },
+                    {
+                        type: "choice",
+                        question: "¿Cuál es la tercera persona del verbo 'HAVE'?",
+                        options: ["haves", "havies", "has", "is have"],
+                        correct: 2,
+                        explanation: "¡Excelente! 'Have' es un verbo irregular y cambia a 'has' para He/She/It."
+                    }
+                ]
+            },
+            {
+                id: 6,
+                title: "Master Challenge",
+                subtitle: "Desafío Final Combinado",
+                color: "#F44336",
+                questions: [
+                    {
+                        type: "choice",
+                        question: "Elige la oración totalmente CORRECTA:",
+                        options: [
+                            "He don't plays football.",
+                            "She plays the piano very well.",
+                            "Do she live here?",
+                            "They doesn't watch TV."
+                        ],
+                        correct: 1,
+                        explanation: "¡Fantástico! 'She plays the piano very well' cumple todas las reglas gramaticales."
+                    },
+                    {
+                        type: "order",
+                        question: "Construye la oración negativa:",
+                        words: ["work", "Sarah", "doesn't", "Sundays.", "on"],
+                        correctOrder: ["Sarah", "doesn't", "work", "on", "Sundays."],
+                        explanation: "¡Impresionante! Has dominado el Simple Present en Super English World."
+                    }
+                ]
+            }
+        ];
+
+        let gameState = {
+            coins: 0,
+            score: 0,
+            lives: 3,
+            currentWorld: 1,
+            unlockedWorlds: 1,
+            stars: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+        };
+
+        function loadSaveData() {
+            const saved = localStorage.getItem('super_english_world_save');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    gameState = { ...gameState, ...parsed };
+                } catch(e) {
+                    console.error("Error loading save data", e);
+                }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('super_english_world_save', JSON.stringify(gameState));
+        }
+
+        function resetProgress() {
+            if (confirm("¿Seguro que deseas reiniciar todo tu progreso y estrellas?")) {
+                localStorage.removeItem('super_english_world_save');
+                gameState = {
+                    coins: 0,
+                    score: 0,
+                    lives: 3,
+                    currentWorld: 1,
+                    unlockedWorlds: 1,
+                    stars: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+                };
+                renderWorldMap();
+                updateHUD();
+                alert("¡Progreso reiniciado correctamente!");
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            const hud = document.getElementById('hud');
+            if (screenId === 'game-screen') {
+                hud.style.display = 'flex';
+                audioEngine.startBGM();
+                initGameLevel(gameState.currentWorld);
+            } else {
+                hud.style.display = 'none';
+                audioEngine.stopBGM();
+                stopGameLoop();
+            }
+
+            if (screenId === 'map-screen') {
+                renderWorldMap();
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-world').innerText = `${gameState.currentWorld}-1`;
+            document.getElementById('hud-coins').innerText = `🪙x${String(gameState.coins).padStart(2, '0')}`;
+            document.getElementById('hud-lives').innerText = `❤️x${gameState.lives}`;
+            document.getElementById('hud-score').innerText = String(gameState.score).padStart(6, '0');
+        }
+
+        function renderWorldMap() {
+            const container = document.getElementById('worlds-container');
+            container.innerHTML = '';
+
+            WORLDS_DATA.forEach(world => {
+                const isLocked = world.id > gameState.unlockedWorlds;
+                const starsCount = gameState.stars[world.id] || 0;
+                const starsStr = '⭐'.repeat(starsCount) + '☆'.repeat(3 - starsCount);
+
+                const card = document.createElement('div');
+                card.className = `world-card ${isLocked ? 'locked' : ''}`;
+                card.style.borderColor = isLocked ? '#555' : world.color;
+
+                card.innerHTML = `
+                    <div class="world-num pixel-text">MUNDO ${world.id}</div>
+                    <div class="world-name">${world.title}</div>
+                    <div style="font-size: 0.7rem; color: #aaa; margin-bottom: 6px;">${world.subtitle}</div>
+                    <div class="world-stars">${isLocked ? '' : starsStr}</div>
+                    ${isLocked ? '<div class="lock-icon">🔒</div>' : ''}
+                `;
+
+                if (!isLocked) {
+                    card.onclick = () => {
+                        audioEngine.jump();
+                        gameState.currentWorld = world.id;
+                        showScreen('game-screen');
+                    };
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        /* --- 2D CANVAS PLATFORMER ENGINE --- */
+        let canvas = document.getElementById('gameCanvas');
+        let ctx = canvas.getContext('2d');
+        let animationFrameId = null;
+
+        let player = {};
+        let platforms = [];
+        let questionBlocks = [];
+        let coinsList = [];
+        let enemies = [];
+        let popups = [];
+        let finishPipe = {};
+        let cameraX = 0;
+        let keys = {};
+        let activeQuestionIndex = 0;
+        let levelQuestions = [];
+        let questionsAnsweredInLevel = 0;
+        let animTicks = 0;
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function checkCollision(rect1, rect2) {
+            const r1 = { x: rect1.x, y: rect1.y, w: rect1.width || rect1.w, h: rect1.height || rect1.h };
+            const r2 = { x: rect2.x, y: rect2.y, w: rect2.width || rect2.w, h: rect2.height || rect2.h };
+            return r1.x < r2.x + r2.w &&
+                   r1.x + r1.w > r2.x &&
+                   r1.y < r2.y + r2.h &&
+                   r1.y + r1.h > r2.y;
+        }
+
+        function createFloatingPopup(x, y, text, color = '#f8d800') {
+            popups.push({ x: x, y: y, text: text, color: color, life: 40 });
+        }
+
+        function initGameLevel(worldId) {
+            resizeCanvas();
+            const worldData = WORLDS_DATA.find(w => w.id === worldId);
+            levelQuestions = [...worldData.questions];
+            questionsAnsweredInLevel = 0;
+            popups = [];
+
+            player = {
+                x: 50,
+                y: canvas.height - 150,
+                width: 32,
+                height: 44,
+                vx: 0,
+                vy: 0,
+                speed: 4.5,
+                jumpPower: -11.5,
+                gravity: 0.55,
+                grounded: false,
+                facing: 'right',
+                invulnerable: 0,
+                walkFrame: 0
+            };
+
+            cameraX = 0;
+
+            platforms = [
+                { x: 0, y: canvas.height - 40, w: 900, h: 40 },
+                { x: 1000, y: canvas.height - 40, w: 1000, h: 40 },
+                { x: 2100, y: canvas.height - 40, w: 800, h: 40 },
+                { x: 250, y: canvas.height - 140, w: 140, h: 20 },
+                { x: 500, y: canvas.height - 200, w: 180, h: 20 },
+                { x: 800, y: canvas.height - 150, w: 120, h: 20 },
+                { x: 1200, y: canvas.height - 180, w: 200, h: 20 },
+                { x: 1600, y: canvas.height - 140, w: 150, h: 20 }
+            ];
+
+            questionBlocks = [
+                { x: 300, y: canvas.height - 240, w: 36, h: 36, hit: false, questionIdx: 0 },
+                { x: 600, y: canvas.height - 300, w: 36, h: 36, hit: false, questionIdx: 1 % levelQuestions.length },
+                { x: 1300, y: canvas.height - 280, w: 36, h: 36, hit: false, questionIdx: 2 % levelQuestions.length }
+            ];
+
+            coinsList = [
+                { x: 200, y: canvas.height - 100, collected: false },
+                { x: 230, y: canvas.height - 100, collected: false },
+                { x: 520, y: canvas.height - 250, collected: false },
+                { x: 550, y: canvas.height - 250, collected: false },
+                { x: 1250, y: canvas.height - 230, collected: false },
+                { x: 1650, y: canvas.height - 180, collected: false }
+            ];
+
+            enemies = [
+                { x: 450, y: canvas.height - 70, w: 30, h: 30, vx: -1.2, minX: 400, maxX: 700, alive: true },
+                { x: 1150, y: canvas.height - 70, w: 30, h: 30, vx: -1.5, minX: 1050, maxX: 1400, alive: true },
+                { x: 1700, y: canvas.height - 70, w: 30, h: 30, vx: -1.8, minX: 1600, maxX: 1900, alive: true }
+            ];
+
+            finishPipe = { x: 2600, y: canvas.height - 110, w: 60, h: 70 };
+
+            updateHUD();
+            startGameLoop();
+        }
+
+        function startGameLoop() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function stopGameLoop() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        }
+
+        function gameLoop() {
+            animTicks++;
+            updatePhysics();
+            renderCanvas();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function updatePhysics() {
+            if (keys['ArrowRight'] || keys['KeyD']) {
+                player.vx = player.speed;
+                player.facing = 'right';
+                player.walkFrame += 0.2;
+            } else if (keys['ArrowLeft'] || keys['KeyA']) {
+                player.vx = -player.speed;
+                player.facing = 'left';
+                player.walkFrame += 0.2;
+            } else {
+                player.vx *= 0.8;
+                player.walkFrame = 0;
+            }
+
+            if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && player.grounded) {
+                player.vy = player.jumpPower;
+                player.grounded = false;
+                audioEngine.jump();
+            }
+
+            player.vy += player.gravity;
+
+            // X-movement
+            player.x += player.vx;
+            platforms.forEach(plat => {
+                if (checkCollision(player, plat)) {
+                    if (player.vx > 0) player.x = plat.x - player.width;
+                    else if (player.vx < 0) player.x = plat.x + plat.w;
+                }
+            });
+
+            // Y-movement
+            player.y += player.vy;
+            player.grounded = false;
+
+            platforms.forEach(plat => {
+                if (checkCollision(player, plat)) {
+                    if (player.vy > 0) {
+                        player.y = plat.y - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    } else if (player.vy < 0) {
+                        player.y = plat.y + plat.h;
+                        player.vy = 0;
+                    }
+                }
+            });
+
+            // Question blocks
+            questionBlocks.forEach(block => {
+                if (!block.hit && checkCollision(player, block)) {
+                    if (player.vy < 0) {
+                        block.hit = true;
+                        player.vy = 2;
+                        triggerQuestion(block.questionIdx);
+                    }
+                }
+            });
+
+            // Coins
+            coinsList.forEach(coin => {
+                if (!coin.collected) {
+                    const coinBox = { x: coin.x - 8, y: coin.y - 12, w: 16, h: 24 };
+                    if (checkCollision(player, coinBox)) {
+                        coin.collected = true;
+                        gameState.coins += 1;
+                        gameState.score += 50;
+                        createFloatingPopup(coin.x, coin.y - 10, "+50");
+                        audioEngine.coin();
+                        updateHUD();
+                    }
+                }
+            });
+
+            // Enemies
+            enemies.forEach(enemy => {
+                if (enemy.alive) {
+                    enemy.x += enemy.vx;
+                    if (enemy.x <= enemy.minX || enemy.x >= enemy.maxX) {
+                        enemy.vx *= -1;
+                    }
+
+                    if (checkCollision(player, enemy)) {
+                        if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 10) {
+                            enemy.alive = false;
+                            player.vy = -7;
+                            gameState.score += 100;
+                            createFloatingPopup(enemy.x, enemy.y, "+100");
+                            audioEngine.stomp();
+                            updateHUD();
+                        } else if (player.invulnerable <= 0) {
+                            player.invulnerable = 60;
+                            gameState.lives--;
+                            audioEngine.wrong();
+                            updateHUD();
+
+                            if (gameState.lives <= 0) {
+                                alert("¡Game Over! Inténtalo de nuevo.");
+                                gameState.lives = 3;
+                                showScreen('map-screen');
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (player.invulnerable > 0) player.invulnerable--;
+
+            // Popups lifecycle
+            popups.forEach((p, index) => {
+                p.y -= 0.8;
+                p.life--;
+                if (p.life <= 0) popups.splice(index, 1);
+            });
+
+            // Pit Fall
+            if (player.y > canvas.height + 50) {
+                gameState.lives--;
+                audioEngine.wrong();
+                updateHUD();
+                if (gameState.lives <= 0) {
+                    alert("¡Game Over!");
+                    gameState.lives = 3;
+                    showScreen('map-screen');
+                } else {
+                    player.x = 50;
+                    player.y = canvas.height - 150;
+                    player.vy = 0;
+                }
+            }
+
+            // Finish Pipe Goal
+            if (checkCollision(player, finishPipe)) {
+                completeLevel();
+            }
+
+            cameraX = Math.max(0, player.x - canvas.width / 3);
+        }
+
+        function completeLevel() {
+            stopGameLoop();
+            audioEngine.fanfare();
+
+            const current = gameState.currentWorld;
+            const starsEarned = Math.min(3, Math.max(1, questionsAnsweredInLevel + 1));
+            
+            if (starsEarned > (gameState.stars[current] || 0)) {
+                gameState.stars[current] = starsEarned;
+            }
+
+            if (current === gameState.unlockedWorlds && gameState.unlockedWorlds < WORLDS_DATA.length) {
+                gameState.unlockedWorlds++;
+            }
+
+            saveData();
+
+            document.getElementById('results-world-name').innerText = `MUNDO ${current}: ${WORLDS_DATA[current - 1].title}`;
+            document.getElementById('results-stars').innerText = '⭐'.repeat(starsEarned) + '☆'.repeat(3 - starsEarned);
+            document.getElementById('res-coins').innerText = gameState.coins;
+            document.getElementById('res-score').innerText = String(gameState.score).padStart(6, '0');
+
+            showScreen('results-screen');
+        }
+
+        function restartCurrentLevel() {
+            showScreen('game-screen');
+        }
+
+        function renderCanvas() {
+            ctx.save();
+            ctx.translate(-cameraX, 0);
+
+            // Sky Background
+            ctx.fillStyle = '#5c94fc';
+            ctx.fillRect(cameraX, 0, canvas.width, canvas.height);
+
+            // NES Pixel Clouds
+            for (let i = 0; i < 12; i++) {
+                let cx = (i * 300) - (cameraX * 0.2);
+                drawNESCloud(ctx, cx, 50);
+            }
+
+            // NES Hills & Bushes
+            for (let i = 0; i < 6; i++) {
+                let hx = (i * 600) - (cameraX * 0.4);
+                drawNESHill(ctx, hx, canvas.height - 40, 140, 60);
+                drawNESBush(ctx, hx + 320, canvas.height - 40);
+            }
+
+            // Ground & Platforms (Brick textured)
+            platforms.forEach(plat => {
+                drawNESGround(ctx, plat.x, plat.y, plat.w, plat.h);
+            });
+
+            // Animated Question Blocks
+            questionBlocks.forEach(block => {
+                if (block.hit) {
+                    ctx.fillStyle = '#802000';
+                    ctx.fillRect(block.x, block.y, block.w, block.h);
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(block.x, block.y, block.w, block.h);
+                } else {
+                    const isGlow = Math.floor(animTicks / 15) % 2 === 0;
+                    ctx.fillStyle = isGlow ? '#f8b800' : '#fc9838';
+                    ctx.fillRect(block.x, block.y, block.w, block.h);
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(block.x, block.y, block.w, block.h);
+
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 18px "Press Start 2P"';
+                    ctx.fillText('?', block.x + 9, block.y + 26);
+                }
+            });
+
+            // Animated Coins
+            coinsList.forEach(coin => {
+                if (!coin.collected) {
+                    const coinWidth = Math.abs(Math.sin(animTicks * 0.1)) * 12 + 4;
+                    ctx.fillStyle = '#f8b800';
+                    ctx.fillRect(coin.x - coinWidth / 2, coin.y - 10, coinWidth, 20);
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(coin.x - coinWidth / 2, coin.y - 10, coinWidth, 20);
+                }
+            });
+
+            // Goombas
+            enemies.forEach(enemy => {
+                if (enemy.alive) {
+                    drawNESGoomba(ctx, enemy.x, enemy.y);
+                }
+            });
+
+            // Finish Pipe
+            drawNESPipe(ctx, finishPipe.x, finishPipe.y, finishPipe.w, finishPipe.h);
+
+            // Floating Popup Score Text
+            popups.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.font = 'bold 12px "Press Start 2P"';
+                ctx.strokeText(p.text, p.x, p.y);
+                ctx.fillText(p.text, p.x, p.y);
+            });
+
+            // Player Hero (Mario)
+            if (player.invulnerable % 4 < 2) {
+                drawNESMario(ctx, player.x, player.y, player.facing, Math.floor(player.walkFrame) % 2);
+            }
+
+            ctx.restore();
+        }
+
+        /* --- RETRO NES GRAPHICS DRAWING HELPERS --- */
+        function drawNESCloud(ctx, x, y) {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x + 20, y + 20, 16, 0, Math.PI * 2);
+            ctx.arc(x + 40, y + 12, 20, 0, Math.PI * 2);
+            ctx.arc(x + 60, y + 20, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function drawNESHill(ctx, x, y, width, height) {
+            ctx.fillStyle = '#00a800';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.quadraticCurveTo(x + width / 2, y - height, x + width, y);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function drawNESBush(ctx, x, y) {
+            ctx.fillStyle = '#00a800';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x + 15, y - 10, 12, 0, Math.PI * 2);
+            ctx.arc(x + 30, y - 16, 16, 0, Math.PI * 2);
+            ctx.arc(x + 45, y - 10, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function drawNESGround(ctx, x, y, w, h) {
+            ctx.fillStyle = '#c84c0c';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, w, h);
+
+            // Brick details
+            ctx.fillStyle = '#802000';
+            for (let bx = x; bx < x + w; bx += 20) {
+                ctx.fillRect(bx, y + 10, 18, 2);
+                ctx.fillRect(bx + 10, y + 25, 18, 2);
+            }
+        }
+
+        function drawNESPipe(ctx, x, y, w, h) {
+            ctx.fillStyle = '#00a800';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, w, h);
+
+            ctx.fillRect(x - 4, y, w + 8, 22);
+            ctx.strokeRect(x - 4, y, w + 8, 22);
+        }
+
+        function drawNESGoomba(ctx, x, y) {
+            ctx.fillStyle = '#c84c0c';
+            ctx.beginPath();
+            ctx.arc(x + 15, y + 12, 14, Math.PI, 0, false);
+            ctx.fillRect(x + 2, y + 12, 26, 10);
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x + 6, y + 8, 5, 8);
+            ctx.fillRect(x + 19, y + 8, 5, 8);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(x + 8, y + 10, 3, 5);
+            ctx.fillRect(x + 19, y + 10, 3, 5);
+
+            // Animated walking feet
+            const footShift = Math.floor(animTicks / 10) % 2 === 0 ? 0 : 3;
+            ctx.fillRect(x + 2 + footShift, y + 22, 10, 8);
+            ctx.fillRect(x + 18 - footShift, y + 22, 10, 8);
+        }
+
+        function drawNESMario(ctx, x, y, facing, walkStep) {
+            ctx.fillStyle = '#e52521'; // Red Cap & Shirt
+            ctx.fillRect(x + 6, y, 20, 8);
+            ctx.fillRect(x + 4, y + 16, 24, 12);
+
+            ctx.fillStyle = '#fc9838'; // Skin
+            ctx.fillRect(x + 6, y + 8, 20, 10);
+
+            ctx.fillStyle = '#0020c0'; // Overalls Blue
+            ctx.fillRect(x + 8, y + 28, 16, 12);
+
+            ctx.fillStyle = '#802000'; // Shoes Brown
+            const legShift = walkStep * 3;
+            ctx.fillRect(x + 4 - legShift, y + 36, 10, 8);
+            ctx.fillRect(x + 18 + legShift, y + 36, 10, 8);
+
+            ctx.fillStyle = '#000000'; // Eye/Mustache
+            const eyeOffset = facing === 'right' ? 18 : 8;
+            ctx.fillRect(x + eyeOffset, y + 10, 4, 4);
+            ctx.fillRect(x + 6, y + 14, 20, 4);
+        }
+
+        function triggerQuestion(questionIdx) {
+            stopGameLoop();
+            audioEngine.powerup();
+
+            const modal = document.getElementById('question-modal');
+            const qData = levelQuestions[questionIdx] || levelQuestions[0];
+
+            document.getElementById('q-topic-tag').innerText = `MUNDO ${gameState.currentWorld}: ${WORLDS_DATA[gameState.currentWorld-1].title}`;
+            document.getElementById('q-text-content').innerText = qData.question;
+
+            const inputContainer = document.getElementById('q-input-container');
+            const feedbackBox = document.getElementById('q-feedback');
+            const submitBtn = document.getElementById('btn-submit-q');
+
+            inputContainer.innerHTML = '';
+            feedbackBox.className = 'feedback-box';
+            feedbackBox.style.display = 'none';
+            submitBtn.style.display = 'none';
+
+            activeQuestionIndex = questionIdx;
+
+            if (qData.type === 'choice') {
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+
+                qData.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerHTML = `<span style="color:var(--mario-yellow); font-weight:bold;">${String.fromCharCode(65 + idx)}.</span> ${opt}`;
+                    btn.onclick = () => checkMultipleChoice(idx, qData);
+                    grid.appendChild(btn);
+                });
+
+                inputContainer.appendChild(grid);
+            } else if (qData.type === 'order') {
+                let userOrder = [];
+
+                const targetBox = document.createElement('div');
+                targetBox.className = 'word-target';
+
+                const poolBox = document.createElement('div');
+                poolBox.className = 'word-pool';
+
+                const shuffled = [...qData.words].sort(() => Math.random() - 0.5);
+
+                function renderWordChips() {
+                    targetBox.innerHTML = '';
+                    if (userOrder.length === 0) {
+                        targetBox.innerHTML = '<span style="color:#888; font-size:0.85rem; width:100%;">Toca las palabras para formar la oración:</span>';
+                    } else {
+                        userOrder.forEach((w, i) => {
+                            const chip = document.createElement('div');
+                            chip.className = 'word-chip';
+                            chip.innerText = w;
+                            chip.onclick = () => {
+                                audioEngine.jump();
+                                userOrder.splice(i, 1);
+                                renderWordChips();
+                            };
+                            targetBox.appendChild(chip);
+                        });
+                    }
+
+                    poolBox.innerHTML = '';
+                    shuffled.forEach((w) => {
+                        if (!userOrder.includes(w) || shuffled.filter(x => x === w).length > userOrder.filter(x => x === w).length) {
+                            const chip = document.createElement('div');
+                            chip.className = 'word-chip';
+                            chip.innerText = w;
+                            chip.onclick = () => {
+                                audioEngine.jump();
+                                userOrder.push(w);
+                                renderWordChips();
+                            };
+                            poolBox.appendChild(chip);
+                        }
+                    });
+                }
+
+                renderWordChips();
+                inputContainer.appendChild(targetBox);
+                inputContainer.appendChild(poolBox);
+
+                submitBtn.style.display = 'block';
+                submitBtn.onclick = () => checkOrderChoice(userOrder, qData);
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function checkMultipleChoice(selectedIndex, qData) {
+            const isCorrect = selectedIndex === qData.correct;
+            processQuestionResult(isCorrect, qData.explanation);
+        }
+
+        function checkOrderChoice(userOrder, qData) {
+            const isCorrect = JSON.stringify(userOrder) === JSON.stringify(qData.correctOrder);
+            processQuestionResult(isCorrect, qData.explanation);
+        }
+
+        function processQuestionResult(isCorrect, explanation) {
+            const feedbackBox = document.getElementById('q-feedback');
+            const modal = document.getElementById('question-modal');
+
+            feedbackBox.style.display = 'block';
+            if (isCorrect) {
+                audioEngine.correct();
+                feedbackBox.className = 'feedback-box correct';
+                feedbackBox.innerHTML = `<strong>¡Excelente! Respuesta Correcta.</strong><br>${explanation}`;
+                gameState.score += 200;
+                gameState.coins += 5;
+                createFloatingPopup(player.x, player.y - 20, "+200 PTS", "#00ff00");
+                questionsAnsweredInLevel++;
+            } else {
+                audioEngine.wrong();
+                feedbackBox.className = 'feedback-box incorrect';
+                feedbackBox.innerHTML = `<strong>¡Incorrecto!</strong><br>${explanation}`;
+            }
+
+            updateHUD();
+
+            setTimeout(() => {
+                modal.style.display = 'none';
+                startGameLoop();
+            }, 2600);
+        }
+
+        window.addEventListener('keydown', e => { keys[e.code] = true; });
+        window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+        function bindTouchBtn(btnId, keyCode) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys[keyCode] = true;
+            });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys[keyCode] = false;
+            });
+        }
+
+        bindTouchBtn('btn-left', 'ArrowLeft');
+        bindTouchBtn('btn-right', 'ArrowRight');
+        bindTouchBtn('btn-jump', 'ArrowUp');
+
+        window.onload = function() {
+            loadSaveData();
+            updateHUD();
+            showScreen('start-screen');
+        };
+    </script>
+</body>
+</html>
